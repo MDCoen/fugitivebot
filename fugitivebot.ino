@@ -34,6 +34,7 @@
 /* Create global variables */
 int curH = 0;
 int desH = 0;
+int winningHeading = 0;
 float e = 0;
 float eP = 0;
 float u = 0;
@@ -86,18 +87,25 @@ void setup() {
   /* Initialize timer3 */
   //  Timer3.initialize(250000);
   //  Timer3.attachInterrupt(interruptExecution);
+
+  getHeading();
+  desH = curH;   // Setup initial robot angle to absolute
 }
 
 void loop() {
-  getHeading();
-  calculateControl();
-  //  Serial.print("Sine of heading error ");
-  //  Serial.println(e);
-  //  Serial.print("Control ");
-  //  Serial.println(round(u));
-  executeControl();
-  updateParams();
-  delay(100);
+  for (uint8_t i = 0; i < SONAR_NUM; i++) { // Loop through all the sensors.
+    if (millis() >= pingTimer[i]) {         // Is it this sensor's time to ping?
+      pingTimer[i] += PING_INTERVAL * SONAR_NUM;  // Set next time this sensor will be pinged.
+      if (i == 0 && currentSensor == SONAR_NUM - 1) 
+      {
+        oneSensorCycle(); // Sensor ping cycle complete, do something with the results.
+      }
+      sonar[currentSensor].timer_stop();          // Make sure previous timer is canceled before starting a new ping (insurance).
+      currentSensor = i;                          // Sensor being accessed.
+      cm[currentSensor] = 0;                      // Make distance zero in case there's no ping echo for this sensor.
+      sonar[currentSensor].ping_timer(echoCheck); // Do the ping (processing continues, interrupt will call echoCheck to look for echo).
+    }
+  }
 }
 
 void interruptExecution() {
@@ -208,16 +216,7 @@ void changeSpeed(int wheel, int pwm) {
 }
 
 void getUltrasound() {
-  for (uint8_t i = 0; i < SONAR_NUM; i++) { // Loop through all the sensors.
-    if (millis() >= pingTimer[i]) {         // Is it this sensor's time to ping?
-      pingTimer[i] += PING_INTERVAL * SONAR_NUM;  // Set next time this sensor will be pinged.
-      if (i == 0 && currentSensor == SONAR_NUM - 1) oneSensorCycle(); // Sensor ping cycle complete, do something with the results.
-      sonar[currentSensor].timer_stop();          // Make sure previous timer is canceled before starting a new ping (insurance).
-      currentSensor = i;                          // Sensor being accessed.
-      cm[currentSensor] = 0;                      // Make distance zero in case there's no ping echo for this sensor.
-      sonar[currentSensor].ping_timer(echoCheck); // Do the ping (processing continues, interrupt will call echoCheck to look for echo).
-    }
-  }
+  
 }
 
 void echoCheck() { // If ping received, set the sensor distance to array.
@@ -226,18 +225,32 @@ void echoCheck() { // If ping received, set the sensor distance to array.
 }
 
 void oneSensorCycle() { // Sensor ping cycle complete, do something with the results.
-  // The following code would be replaced with your code that does something with the ping results.
-  for (uint8_t i = 0; i < SONAR_NUM; i++) {
-    Serial.print(i);
-    Serial.print("=");
-    Serial.print(cm[i]);
-    Serial.print("cm ");
-  }
+
+  deshUpdate();  //Update desired heading
+  getHeading();
+  calculateControl();
+  //  Serial.print("Sine of heading error ");
+  //  Serial.println(e);
+  //  Serial.print("Control ");
+  //  Serial.println(round(u));
+  executeControl();
+  updateParams();
   Serial.println();
 }
 
 void deshUpdate() {
-  getUltrasound();
-  /* This is where the heading logic is added */
+  max_array(cm, SONAR_NUM); // Find which sensor had max distance
+  desH = desH + winningHeading;
 }
 
+void max_array(unsigned int a[], int num_elements)
+{
+   winningHeading = 0;
+   maxDistance = -1;
+   for (uint8_t i =0; i<num_elements; i++)
+   {
+      if (a[i]>maxDistance)
+      {
+          winningHeading = i*45;  //assuming sensor 1 is directly in front
+          maxDistance = a[i];
+      }
