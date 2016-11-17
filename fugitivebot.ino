@@ -35,6 +35,7 @@
 int curH = 0;
 int desH = 0;
 int winningHeading = 0;
+int maxDistance = 0;
 float e = 0;
 float eP = 0;
 float u = 0;
@@ -57,7 +58,7 @@ NewPing sonar[SONAR_NUM] = {     // Sensor object array.
 
 void setup() {
   //Initialize Serial and I2C communications
-  Serial.begin(9600);
+  Serial.begin(115200);
   Wire.begin();
 
   /* Put the HMC5883 IC into the correct operating mode */
@@ -254,3 +255,5 @@ void max_array(unsigned int a[], int num_elements)
           winningHeading = i*45;  //assuming sensor 1 is directly in front
           maxDistance = a[i];
       }
+   }
+}
