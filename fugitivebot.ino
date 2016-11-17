@@ -26,7 +26,7 @@
 #define address 0x1E //0011110b, I2C 7bit address of HMC5883
 
 /* Define ultrasound paramaters*/
-#define SONAR_NUM     4 // Number of sensors.
+#define SONAR_NUM     8 // Number of sensors.
 #define MAX_DISTANCE 400 // Maximum distance (in cm) to ping.
 #define PING_INTERVAL 60 // Milliseconds between sensor pings (29ms is about the min to avoid cross-sensor echo).
 
@@ -48,7 +48,11 @@ NewPing sonar[SONAR_NUM] = {     // Sensor object array.
   NewPing(30, 31, MAX_DISTANCE), // Each sensor's trigger pin, echo pin, and max distance to ping.
   NewPing(32, 33, MAX_DISTANCE),
   NewPing(34, 35, MAX_DISTANCE),
-  NewPing(36, 37, MAX_DISTANCE)
+  NewPing(36, 37, MAX_DISTANCE),
+  NewPing(38, 39, MAX_DISTANCE),
+  NewPing(40, 41, MAX_DISTANCE),
+  NewPing(42, 43, MAX_DISTANCE),
+  NewPing(44, 45, MAX_DISTANCE)
 };
 
 void setup() {
