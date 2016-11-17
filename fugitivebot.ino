@@ -8,7 +8,6 @@
 /* Include needed libraries */
 #include <Wire.h> //I2C Arduino library
 #include <NewPing.h>  //new ping library
-#include "TimerThree.h" //interupt library
 
 /* Define sampling time and control gains */
 #define T 0.1   //sampling time in seconds
@@ -28,14 +27,14 @@
 
 /* Define ultrasound paramaters*/
 #define SONAR_NUM     8 // Number of sensors.
-#define MAX_DISTANCE 200 // Maximum distance (in cm) to ping.
-#define PING_INTERVAL 33 // Milliseconds between sensor pings (29ms is about the min to avoid cross-sensor echo).
+#define MAX_DISTANCE 400 // Maximum distance (in cm) to ping.
+#define PING_INTERVAL 60 // Milliseconds between sensor pings (29ms is about the min to avoid cross-sensor echo).
 
 /* Create global variables */
 int curH = 0;
 int desH = 0;
-int winningHeading = 0;
-int maxDistance = 0;
+uint8_t winningHeading = 0;
+unsigned int maxDistance = 0;
 float e = 0;
 float eP = 0;
 float u = 0;
@@ -107,14 +106,6 @@ void loop() {
       sonar[currentSensor].ping_timer(echoCheck); // Do the ping (processing continues, interrupt will call echoCheck to look for echo).
     }
   }
-}
-
-void interruptExecution() {
-  deshUpdate();
-  getHeading();
-  calculateControl();
-  executeControl();
-  updateParams();
 }
 
 void calculateControl() {
@@ -216,9 +207,6 @@ void changeSpeed(int wheel, int pwm) {
   }
 }
 
-void getUltrasound() {
-  
-}
 
 void echoCheck() { // If ping received, set the sensor distance to array.
   if (sonar[currentSensor].check_timer())
@@ -227,8 +215,21 @@ void echoCheck() { // If ping received, set the sensor distance to array.
 
 void oneSensorCycle() { // Sensor ping cycle complete, do something with the results.
 
+for (uint8_t i = 0; i < SONAR_NUM; i++) {
+      
+    Serial.print(i);
+    Serial.print("=");
+    Serial.print(cm[i]);
+    Serial.print("cm ");
+  }
+  
+  Serial.println();
   deshUpdate();  //Update desired heading
+  Serial.println(maxDistance);
+  Serial.println(winningHeading);
+  Serial.println(desH);
   getHeading();
+  Serial.println(curH);
   calculateControl();
   //  Serial.print("Sine of heading error ");
   //  Serial.println(e);
@@ -242,18 +243,27 @@ void oneSensorCycle() { // Sensor ping cycle complete, do something with the res
 void deshUpdate() {
   max_array(cm, SONAR_NUM); // Find which sensor had max distance
   desH = desH + winningHeading;
+
+  if (desH > 180)
+  {
+    desH = 360 - desH;    
+  }
+  else if (desH < -180)
+  {
+    desH = -1*(360 + desH);
+  }
 }
 
 void max_array(unsigned int a[], int num_elements)
 {
    winningHeading = 0;
-   maxDistance = -1;
+   maxDistance = 0;
    for (uint8_t i =0; i<num_elements; i++)
    {
-      if (a[i]>maxDistance)
+      if (cm[i]>maxDistance)
       {
+          maxDistance = cm[i];
           winningHeading = i*45;  //assuming sensor 1 is directly in front
-          maxDistance = a[i];
       }
    }
 }
