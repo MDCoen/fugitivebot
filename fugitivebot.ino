@@ -117,7 +117,7 @@ void calculateControl() {
 }
 
 void updateParams() {
-  uP = u;
+  uP = ul;
   eP = e;
 }
 
