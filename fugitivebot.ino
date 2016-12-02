@@ -11,8 +11,10 @@
 
 /* Define sampling time and control gains */
 #define T 0.1   //sampling time in seconds
-#define Kp 90  //perportional control
-#define Ki .00  //integral control
+#define Kp 1.5115  //perportional control
+#define K_pwm 93.577  //pwm conversion gain
+#define K_feedforward 16.5  //feedforward gain for keeping it moving
+#define vel_feedforward 0.1 //m/s
 
 /* Define motor pins */
 #define enablePin1 3   //enable pin for motor 1
@@ -37,10 +39,9 @@ uint8_t winningHeading = 0;
 unsigned int maxDistance = 0;
 float e = 0;
 float eP = 0;
-float u = 0;
+float ur = 0;
+float ul = 0;
 float uP = 0;
-int pwml = 165;
-int pwmr = 165;
 unsigned long pingTimer[SONAR_NUM]; // Holds the times when the next ping should happen for each sensor.
 unsigned int cm[SONAR_NUM];         // Where the ping distances are stored.
 uint8_t currentSensor = 0;          // Keeps track of which sensor is active.
@@ -111,7 +112,8 @@ void loop() {
 void calculateControl() {
   e = sin((desH - curH) * M_PI / 180);
   //  u = uP + (Kp+0.5*Ki*T)*e + (0.5*Kp*T+Ki)*eP;
-  u  = Kp * e;
+  ul = K_pwm*(K_feedforward*vel_feedforward + Kp*e);
+  ur = K_pwm*(K_feedforward*vel_feedforward - Kp*e); 
 }
 
 void updateParams() {
@@ -120,8 +122,8 @@ void updateParams() {
 }
 
 void executeControl() {
-  changeSpeed(1, pwml + u);
-  changeSpeed(2, pwmr - u);
+  changeSpeed(1, ul);
+  changeSpeed(2, ur);
 }
 
 void getHeading() {
