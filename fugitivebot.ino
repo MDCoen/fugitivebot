@@ -144,36 +144,16 @@ void getHeading() {
     y |= Wire.read(); //Y lsb
   }
 
-  //Print out values of each axis
-  //  Serial.print("x: ");
-  //  Serial.print(x);
-  //  Serial.print("  y: ");
-  //  Serial.print(y);
-  //  Serial.print("  z: ");
-  //  Serial.println(z);
-
   // Hold the module so that Z is pointing 'up' and you can measure the heading with x&y
-  // Calculate heading when the magnetometer is level, then correct for signs of axis.
   float heading = atan2(y, x);
 
   // Once you have your heading, you must then add your 'Declination Angle', which is the 'Error' of the magnetic field in your location.
   // Find yours here: http://www.magnetic-declination.com/
-  // If you cannot find your Declination, comment out these two lines, your compass will be slightly off.
   float declinationAngle = 0.05468;
   heading += declinationAngle;
 
-  //  // Correct for when signs are reversed.
-  //  if(heading < 0)
-  //    heading += 2*PI;
-  //
-  //  // Check for wrap due to addition of declination.
-  //  if(heading > 2*PI)
-  //    heading -= 2*PI;
-
   // Convert radians to degrees for readability.
   curH = heading * 180 / M_PI;
-  //  Serial.println(headingDegrees);
-  //  return headingDegrees;
 }
 
 void changeSpinDirection(int wheel, bool pin1High) {
