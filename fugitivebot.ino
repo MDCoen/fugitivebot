@@ -11,10 +11,10 @@
 
 /* Define sampling time and control gains */
 #define T 0.1   //sampling time in seconds
-#define Kp 1.5115  //perportional control
+#define Kp 0.755  //perportional control
 #define K_pwm 93.577  //pwm conversion gain
-#define K_feedforward 16.5  //feedforward gain for keeping it moving
-#define vel_feedforward 0.1 //m/s
+#define K_feedforward 3.3  //feedforward gain for keeping it moving
+#define vel_feedforward 0.5 //m/s
 
 /* Define motor pins */
 #define enablePin1 3   //enable pin for motor 1
@@ -50,7 +50,7 @@ NewPing sonar[SONAR_NUM] = {     // Sensor object array.
   NewPing(32, 33, MAX_DISTANCE),
   NewPing(34, 35, MAX_DISTANCE),
   NewPing(36, 37, MAX_DISTANCE),
-  NewPing(38, 39, MAX_DISTANCE),
+  NewPing(38, 39, MAX_DISTANCE), 
   NewPing(40, 41, MAX_DISTANCE),
   NewPing(42, 43, MAX_DISTANCE),
   NewPing(44, 45, MAX_DISTANCE)
@@ -91,6 +91,7 @@ void setup() {
 
   getHeading();
   desH = curH;   // Setup initial robot angle to absolute
+//  desH = 45;
 }
 
 void loop() {
@@ -112,12 +113,28 @@ void loop() {
 void calculateControl() {
   e = sin((desH - curH) * M_PI / 180);
   //  u = uP + (Kp+0.5*Ki*T)*e + (0.5*Kp*T+Ki)*eP;
-  ul = K_pwm*(K_feedforward*vel_feedforward + Kp*e);
-  ur = K_pwm*(K_feedforward*vel_feedforward - Kp*e); 
+  ul = round(K_pwm*(K_feedforward*vel_feedforward + Kp*e) + 10);
+  ur = round(K_pwm*(K_feedforward*vel_feedforward - Kp*e)); 
+  limitControl();
+}
+
+void limitControl() {
+  if (ul > 255) {
+    ul = 255;
+  }
+  else if (ul < 50) {
+    ul = 50;
+  }
+  if (ur > 255) {
+    ul = 255;
+  }
+  else if (ur < 50) {
+    ur = 50;
+  }
 }
 
 void updateParams() {
-  uP = u;
+  uP = ul;
   eP = e;
 }
 
@@ -153,7 +170,13 @@ void getHeading() {
   heading += declinationAngle;
 
   // Convert radians to degrees for readability.
+<<<<<<< HEAD
   curH = heading * 180 / M_PI;
+=======
+  curH = heading * 180 / 3.141592;
+  //  Serial.println(headingDegrees);
+  //  return headingDegrees;
+>>>>>>> origin/master
 }
 
 void changeSpinDirection(int wheel, bool pin1High) {
@@ -206,17 +229,21 @@ for (uint8_t i = 0; i < SONAR_NUM; i++) {
   }
   
   Serial.println();
-  deshUpdate();  //Update desired heading
-  Serial.println(maxDistance);
-  Serial.println(winningHeading);
+//  deshUpdate();  //Update desired heading
+//  Serial.println(maxDistance);
+//  Serial.println(winningHeading);
+  Serial.print("Desired Heading: ");
   Serial.println(desH);
   getHeading();
+  Serial.print("Current Heading: ");
   Serial.println(curH);
   calculateControl();
-  //  Serial.print("Sine of heading error ");
-  //  Serial.println(e);
-  //  Serial.print("Control ");
-  //  Serial.println(round(u));
+  Serial.print("Error ");
+  Serial.println(e);
+  Serial.print("Control Left: ");
+  Serial.print(round(ul));
+  Serial.print("\tControl Right: ");
+  Serial.println(round(ur));
   executeControl();
   updateParams();
   Serial.println();
