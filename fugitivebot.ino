@@ -11,10 +11,10 @@
 
 /* Define sampling time and control gains */
 #define T 0.1   //sampling time in seconds
-#define Kp 0.755  //perportional control
+#define Kp 0.755  //proportional control
 #define K_pwm 93.577  //pwm conversion gain
 #define K_feedforward 3.3  //feedforward gain for keeping it moving
-#define vel_feedforward 0.5 //m/s
+#define vel_feedforward 0.3 //m/s
 
 /* Define motor pins */
 #define enablePin1 3   //enable pin for motor 1
@@ -30,11 +30,13 @@
 /* Define ultrasound paramaters*/
 #define SONAR_NUM     8 // Number of sensors.
 #define MAX_DISTANCE 400 // Maximum distance (in cm) to ping.
-#define PING_INTERVAL 60 // Milliseconds between sensor pings (29ms is about the min to avoid cross-sensor echo).
+#define PING_INTERVAL 100 // Milliseconds between sensor pings (29ms is about the min to avoid cross-sensor echo).
 
 /* Create global variables */
 int curH = 0;
 int desH = 0;
+int k = 0;
+int p = 0;
 uint8_t winningHeading = 0;
 unsigned int maxDistance = 0;
 float e = 0;
@@ -104,7 +106,7 @@ void loop() {
       }
       sonar[currentSensor].timer_stop();          // Make sure previous timer is canceled before starting a new ping (insurance).
       currentSensor = i;                          // Sensor being accessed.
-      cm[currentSensor] = 0;                      // Make distance zero in case there's no ping echo for this sensor.
+      cm[currentSensor] = 401;                      // Make distance zero in case there's no ping echo for this sensor.
       sonar[currentSensor].ping_timer(echoCheck); // Do the ping (processing continues, interrupt will call echoCheck to look for echo).
     }
   }
@@ -113,7 +115,7 @@ void loop() {
 void calculateControl() {
   e = sin((desH - curH) * M_PI / 180);
   //  u = uP + (Kp+0.5*Ki*T)*e + (0.5*Kp*T+Ki)*eP;
-  ul = round(K_pwm*(K_feedforward*vel_feedforward + Kp*e) + 10);
+  ul = round(K_pwm*(K_feedforward*vel_feedforward + Kp*e) );
   ur = round(K_pwm*(K_feedforward*vel_feedforward - Kp*e)); 
   limitControl();
 }
@@ -170,13 +172,13 @@ void getHeading() {
   heading += declinationAngle;
 
   // Convert radians to degrees for readability.
-<<<<<<< HEAD
-  curH = heading * 180 / M_PI;
-=======
+//<<<<<<< HEAD
+  //curH = heading * 180 / M_PI;
+//=======
   curH = heading * 180 / 3.141592;
   //  Serial.println(headingDegrees);
   //  return headingDegrees;
->>>>>>> origin/master
+//>>>>>>> origin/master
 }
 
 void changeSpinDirection(int wheel, bool pin1High) {
@@ -229,24 +231,28 @@ for (uint8_t i = 0; i < SONAR_NUM; i++) {
   }
   
   Serial.println();
-//  deshUpdate();  //Update desired heading
-//  Serial.println(maxDistance);
-//  Serial.println(winningHeading);
+  deshUpdate();  //Update desired heading
+  Serial.print("winning head ");
+  Serial.println(winningHeading);
+  
+  Serial.print("max ");
+  Serial.println(maxDistance);
+  
   Serial.print("Desired Heading: ");
   Serial.println(desH);
   getHeading();
-  Serial.print("Current Heading: ");
-  Serial.println(curH);
-  calculateControl();
-  Serial.print("Error ");
-  Serial.println(e);
-  Serial.print("Control Left: ");
-  Serial.print(round(ul));
-  Serial.print("\tControl Right: ");
-  Serial.println(round(ur));
-  executeControl();
-  updateParams();
-  Serial.println();
+//  Serial.print("Current Heading: ");
+//  Serial.println(curH);
+//  calculateControl();
+//  Serial.print("Error ");
+//  Serial.println(e);
+//  Serial.print("Control Left: ");
+//  Serial.print(round(ul));
+//  Serial.print("\tControl Right: ");
+//  Serial.println(round(ur));
+//  executeControl();
+//  updateParams();
+//  Serial.println();
 }
 
 void deshUpdate() {
